@@ -1,10 +1,11 @@
 package jobUsecase
 
 // add job entity validation
-// check if user existis on database (needs to receive User repo)
+// check if user existis on database (needs to receive User repo) ;;;
 import (
 	jobEntity "jobs.api.com/internal/domain/entities/job"
 	jobRepositoryAbs "jobs.api.com/internal/domain/repository/job"
+	userRepositoryAbs "jobs.api.com/internal/domain/repository/user"
 )
 
 type UseCase interface {
@@ -13,11 +14,12 @@ type UseCase interface {
 }
 
 type JobUseCase struct {
-	repository jobRepositoryAbs.JobRepositoryInterface
+	repository     jobRepositoryAbs.JobRepositoryInterface
+	userRepository userRepositoryAbs.UserRepositoryAbs
 }
 
-func NewJobUseCase(repository jobRepositoryAbs.JobRepositoryInterface) *JobUseCase {
-	return &JobUseCase{repository: repository}
+func NewJobUseCase(repository jobRepositoryAbs.JobRepositoryInterface, userRepository userRepositoryAbs.UserRepositoryAbs) *JobUseCase {
+	return &JobUseCase{repository: repository, userRepository: userRepository}
 }
 
 func (useCase *JobUseCase) PostJob(payload *jobEntity.Job) error {

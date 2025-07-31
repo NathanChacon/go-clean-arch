@@ -9,8 +9,10 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	jobHandlers "jobs.api.com/internal/infrastructure/http"
-	jobRepository "jobs.api.com/internal/infrastructure/respository"
+	jobRepository "jobs.api.com/internal/infrastructure/respository/job"
+	userRepository "jobs.api.com/internal/infrastructure/respository/user"
 	jobUsecase "jobs.api.com/internal/usecases/job"
+	userUseCase "jobs.api.com/internal/usecases/user"
 )
 
 func main() {
@@ -28,8 +30,12 @@ func main() {
 	}
 	defer db.Close()
 
+	userRepo := userRepository.NewUserRepository(db)
+	userUseCases := userUseCase.NewUserUseCase(userRepo)
+	// create userUseCases controller
+
 	jobRepo := jobRepository.NewJobMySQLRepository(db)
-	jobUseCases := jobUsecase.NewJobUseCase(jobRepo)
+	jobUseCases := jobUsecase.NewJobUseCase(jobRepo, userRepo)
 	jobHandler := jobHandlers.NewJobHandler(jobUseCases)
 
 	router := mux.NewRouter()
