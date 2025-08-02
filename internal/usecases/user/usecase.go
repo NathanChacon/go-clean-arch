@@ -6,8 +6,8 @@ import (
 )
 
 type UseCase interface {
-	CreateUser(payload *userEntity.User) error
-	GetById(id string) (*userEntity.User, error)
+	CreateUser(payload userEntity.User) error
+	GetById(id string) (userEntity.User, error)
 }
 
 type UserUseCase struct {

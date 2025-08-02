@@ -5,10 +5,12 @@ import (
 	"net/http"
 	"os"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
-	jobHandlers "jobs.api.com/internal/infrastructure/http"
+	jobHandlers "jobs.api.com/internal/infrastructure/http/job"
+	userHandler "jobs.api.com/internal/infrastructure/http/user"
 	jobRepository "jobs.api.com/internal/infrastructure/respository/job"
 	userRepository "jobs.api.com/internal/infrastructure/respository/user"
 	jobUsecase "jobs.api.com/internal/usecases/job"
@@ -32,7 +34,7 @@ func main() {
 
 	userRepo := userRepository.NewUserRepository(db)
 	userUseCases := userUseCase.NewUserUseCase(userRepo)
-	// create userUseCases controller
+	userHandler := userHandler.NewUserHandler(userUseCases)
 
 	jobRepo := jobRepository.NewJobMySQLRepository(db)
 	jobUseCases := jobUsecase.NewJobUseCase(jobRepo, userRepo)
@@ -40,6 +42,7 @@ func main() {
 
 	router := mux.NewRouter()
 
+	router.HandleFunc("/user/{id}", userHandler.GetUserById).Methods("GET")
 	router.HandleFunc("/jobs", jobHandler.PostJob).Methods("POST")
 	router.HandleFunc("/jobs/{id}", jobHandler.GetJobByID).Methods("GET")
 
