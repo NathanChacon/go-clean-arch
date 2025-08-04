@@ -1,28 +1,45 @@
 package jobUsecase
 
-// add job entity validation
-// check if user existis on database (needs to receive User repo) ;;;
 import (
 	jobEntity "jobs.api.com/internal/domain/entities/job"
+	userEntity "jobs.api.com/internal/domain/entities/user"
 	jobRepositoryAbs "jobs.api.com/internal/domain/repository/job"
 	userRepositoryAbs "jobs.api.com/internal/domain/repository/user"
 )
 
+type UuidGenerator interface {
+	NewUuid() string
+}
+
 type UseCase interface {
-	PostJob(payload *jobEntity.Job) error
+	PostJob(payload jobEntity.Job) error
 	GetById(uuid string) (*jobEntity.Job, error)
 }
 
 type JobUseCase struct {
 	repository     jobRepositoryAbs.JobRepositoryInterface
 	userRepository userRepositoryAbs.UserRepositoryAbs
+	uuidGenerator  UuidGenerator
 }
 
-func NewJobUseCase(repository jobRepositoryAbs.JobRepositoryInterface, userRepository userRepositoryAbs.UserRepositoryAbs) *JobUseCase {
-	return &JobUseCase{repository: repository, userRepository: userRepository}
+func (usecase *JobUseCase) isUserRegistered(userId string) (userEntity.User, error) {
+	user, err := usecase.userRepository.GetById(userId)
+
+	return user, err
 }
 
-func (useCase *JobUseCase) PostJob(payload *jobEntity.Job) error {
+func NewJobUseCase(repository jobRepositoryAbs.JobRepositoryInterface, userRepository userRepositoryAbs.UserRepositoryAbs, uuidGenerator UuidGenerator) *JobUseCase {
+	return &JobUseCase{repository: repository, userRepository: userRepository, uuidGenerator: uuidGenerator}
+}
+
+func (useCase *JobUseCase) PostJob(payload jobEntity.Job) error {
+	payload.UUID = useCase.uuidGenerator.NewUuid()
+	_, userErr := useCase.isUserRegistered(payload.CreatedBy)
+
+	if userErr != nil {
+		return userErr
+	}
+
 	err := useCase.repository.Create(payload)
 
 	return err

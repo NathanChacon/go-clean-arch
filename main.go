@@ -1,5 +1,7 @@
 package main
 
+// create global error handler for debuggin and better error messages
+
 import (
 	"log"
 	"net/http"
@@ -13,6 +15,7 @@ import (
 	userHandler "jobs.api.com/internal/infrastructure/http/user"
 	jobRepository "jobs.api.com/internal/infrastructure/respository/job"
 	userRepository "jobs.api.com/internal/infrastructure/respository/user"
+	uuidGenerator "jobs.api.com/internal/infrastructure/uuid"
 	jobUsecase "jobs.api.com/internal/usecases/job"
 	userUseCase "jobs.api.com/internal/usecases/user"
 )
@@ -32,12 +35,14 @@ func main() {
 	}
 	defer db.Close()
 
+	uuidGenerator := uuidGenerator.NewUuidGenerator()
+
 	userRepo := userRepository.NewUserRepository(db)
 	userUseCases := userUseCase.NewUserUseCase(userRepo)
 	userHandler := userHandler.NewUserHandler(userUseCases)
 
 	jobRepo := jobRepository.NewJobMySQLRepository(db)
-	jobUseCases := jobUsecase.NewJobUseCase(jobRepo, userRepo)
+	jobUseCases := jobUsecase.NewJobUseCase(jobRepo, userRepo, uuidGenerator)
 	jobHandler := jobHandlers.NewJobHandler(jobUseCases)
 
 	router := mux.NewRouter()

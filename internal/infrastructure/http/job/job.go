@@ -18,21 +18,21 @@ func NewJobHandler(usecase jobUsecase.UseCase) *JobHandler {
 	return &JobHandler{usecase: usecase}
 }
 
-func (handler *JobHandler) PostJob(w http.ResponseWriter, r *http.Request) {
+func (handler *JobHandler) PostJob(writer http.ResponseWriter, request *http.Request) {
 	var job jobEntity.Job
 
-	if err := json.NewDecoder(r.Body).Decode(&job); err != nil {
-		http.Error(w, "Invalid payload", http.StatusBadRequest)
+	if err := json.NewDecoder(request.Body).Decode(&job); err != nil {
+		http.Error(writer, "Invalid payload", http.StatusBadRequest)
 		return
 	}
 
-	err := handler.usecase.PostJob(&job)
+	err := handler.usecase.PostJob(job)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	writer.WriteHeader(http.StatusCreated)
 }
 
 func (handler *JobHandler) GetJobByID(w http.ResponseWriter, r *http.Request) {
