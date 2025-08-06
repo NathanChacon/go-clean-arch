@@ -2,9 +2,11 @@ package jobHandlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	jobEntity "jobs.api.com/internal/domain/entities/job"
+	domainErrors "jobs.api.com/internal/domain/errors"
 	jobUsecase "jobs.api.com/internal/usecases/job"
 
 	"github.com/gorilla/mux"
@@ -27,6 +29,10 @@ func (handler *JobHandler) PostJob(writer http.ResponseWriter, request *http.Req
 	}
 
 	err := handler.usecase.PostJob(job)
+	if errors.Is(err, domainErrors.ErrUserNotFound) {
+		http.Error(writer, "Failed to post job because user dont exists", http.StatusBadRequest)
+		return
+	}
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return

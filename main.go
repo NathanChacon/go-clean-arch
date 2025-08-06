@@ -1,7 +1,5 @@
 package main
 
-// create global error handler for debuggin and better error messages
-
 import (
 	"log"
 	"net/http"
@@ -48,6 +46,7 @@ func main() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/user/{id}", userHandler.GetUserById).Methods("GET")
+	router.HandleFunc("/create-account", userHandler.GetUserById).Methods("POST") // implementar handler que vai retornar JWT se create account funcionar
 	router.HandleFunc("/jobs", jobHandler.PostJob).Methods("POST")
 	router.HandleFunc("/jobs/{id}", jobHandler.GetJobByID).Methods("GET")
 
