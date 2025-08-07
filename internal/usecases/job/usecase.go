@@ -2,14 +2,9 @@ package jobUsecase
 
 import (
 	jobEntity "jobs.api.com/internal/domain/entities/job"
-	userEntity "jobs.api.com/internal/domain/entities/user"
 	jobRepositoryAbs "jobs.api.com/internal/domain/repository/job"
-	userRepositoryAbs "jobs.api.com/internal/domain/repository/user"
+	uuidInterface "jobs.api.com/internal/interfaces/uuid"
 )
-
-type UuidGenerator interface {
-	NewUuid() string
-}
 
 type UseCase interface {
 	PostJob(payload jobEntity.Job) error
@@ -17,28 +12,16 @@ type UseCase interface {
 }
 
 type JobUseCase struct {
-	repository     jobRepositoryAbs.JobRepositoryInterface
-	userRepository userRepositoryAbs.UserRepositoryAbs
-	uuidGenerator  UuidGenerator
+	repository    jobRepositoryAbs.JobRepositoryInterface
+	uuidGenerator uuidInterface.UuidGenerator
 }
 
-func (usecase *JobUseCase) isUserRegistered(userId string) (userEntity.User, error) {
-	user, err := usecase.userRepository.GetById(userId)
-
-	return user, err
-}
-
-func NewJobUseCase(repository jobRepositoryAbs.JobRepositoryInterface, userRepository userRepositoryAbs.UserRepositoryAbs, uuidGenerator UuidGenerator) *JobUseCase {
-	return &JobUseCase{repository: repository, userRepository: userRepository, uuidGenerator: uuidGenerator}
+func NewJobUseCase(repository jobRepositoryAbs.JobRepositoryInterface, uuidGenerator uuidInterface.UuidGenerator) *JobUseCase {
+	return &JobUseCase{repository: repository, uuidGenerator: uuidGenerator}
 }
 
 func (useCase *JobUseCase) PostJob(payload jobEntity.Job) error {
 	payload.UUID = useCase.uuidGenerator.NewUuid()
-	_, userErr := useCase.isUserRegistered(payload.CreatedBy)
-
-	if userErr != nil {
-		return userErr
-	}
 
 	err := useCase.repository.Create(payload)
 

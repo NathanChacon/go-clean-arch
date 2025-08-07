@@ -36,17 +36,17 @@ func main() {
 	uuidGenerator := uuidGenerator.NewUuidGenerator()
 
 	userRepo := userRepository.NewUserRepository(db)
-	userUseCases := userUseCase.NewUserUseCase(userRepo)
+	userUseCases := userUseCase.NewUserUseCase(userRepo, uuidGenerator)
 	userHandler := userHandler.NewUserHandler(userUseCases)
 
 	jobRepo := jobRepository.NewJobMySQLRepository(db)
-	jobUseCases := jobUsecase.NewJobUseCase(jobRepo, userRepo, uuidGenerator)
+	jobUseCases := jobUsecase.NewJobUseCase(jobRepo, uuidGenerator)
 	jobHandler := jobHandlers.NewJobHandler(jobUseCases)
 
 	router := mux.NewRouter()
 
 	router.HandleFunc("/user/{id}", userHandler.GetUserById).Methods("GET")
-	router.HandleFunc("/create-account", userHandler.GetUserById).Methods("POST") // implementar handler que vai retornar JWT se create account funcionar
+	router.HandleFunc("/create-account", userHandler.CreateUser).Methods("POST")
 	router.HandleFunc("/jobs", jobHandler.PostJob).Methods("POST")
 	router.HandleFunc("/jobs/{id}", jobHandler.GetJobByID).Methods("GET")
 

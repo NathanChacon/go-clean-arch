@@ -2,17 +2,20 @@ package userHandler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	domainErrors "jobs.api.com/internal/domain/errors"
 	userUseCase "jobs.api.com/internal/usecases/user"
 )
 
 type UserDto struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
-	Bio   string `json:"bio"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Password string `json:"-"`
+	Bio      string `json:"bio"`
 }
 
 type UserHandler struct {
@@ -24,11 +27,6 @@ func NewUserHandler(usecase userUseCase.UseCase) *UserHandler {
 		UserUseCase: usecase,
 	}
 }
-
-// improve error validation
-// isValidPayload ?
-// did the user was found ?
-// did was a internal error ?
 
 func (userHandler *UserHandler) GetUserById(writer http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
@@ -57,4 +55,32 @@ func (userHandler *UserHandler) GetUserById(writer http.ResponseWriter, request 
 		return
 	}
 
+}
+
+func (userHandler *UserHandler) CreateUser(writer http.ResponseWriter, request *http.Request) {
+	var userData userUseCase.CreateAccountParams
+
+	json.NewDecoder(request.Body).Decode(&userData)
+
+	err := userHandler.UserUseCase.CreateUser(userData)
+
+	if errors.Is(err, domainErrors.ErrInvalidUserCredential) {
+		http.Error(writer, "Invalid credential", http.StatusBadRequest)
+		return
+	}
+
+	if errors.Is(err, domainErrors.ErrInvalidEmailFormat) {
+		http.Error(writer, "Invalid email", http.StatusBadRequest)
+		return
+	}
+
+	if errors.Is(err, domainErrors.ErrUserAlreadyRegistered) {
+		http.Error(writer, "User already registered", http.StatusBadRequest)
+		return
+	}
+
+	if err != nil {
+		http.Error(writer, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
 }

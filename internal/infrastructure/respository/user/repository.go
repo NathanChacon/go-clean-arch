@@ -3,7 +3,9 @@ package userRepository
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 
 	userEntity "jobs.api.com/internal/domain/entities/user"
@@ -23,6 +25,11 @@ type UserRepository struct {
 	db *sqlx.DB
 }
 
+func isDuplicateErr(err error) bool {
+	var mysqlErr *mysql.MySQLError
+	return errors.As(err, &mysqlErr) && mysqlErr.Number == 1062
+}
+
 func NewUserRepository(db *sqlx.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
@@ -30,9 +37,15 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 func (r *UserRepository) CreateUser(payload userEntity.User) error {
 	query := `
         INSERT INTO users (uuid, email, password, name, location, bio)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?)
     `
 	_, err := r.db.Exec(query, payload.UUID, payload.Email, payload.Password, payload.Name, payload.Location, payload.Bio)
+	if isDuplicateErr(err) {
+		return domainErrors.ErrUserAlreadyRegistered
+	}
+	fmt.Print(payload)
+
+	fmt.Print(err)
 	return err
 }
 
