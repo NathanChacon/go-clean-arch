@@ -13,7 +13,8 @@ import (
 	userHandler "jobs.api.com/internal/infrastructure/http/user"
 	jobRepository "jobs.api.com/internal/infrastructure/respository/job"
 	userRepository "jobs.api.com/internal/infrastructure/respository/user"
-	uuidGenerator "jobs.api.com/internal/infrastructure/uuid"
+	"jobs.api.com/internal/infrastructure/utils/passwordHasher"
+	uuidGenerator "jobs.api.com/internal/infrastructure/utils/uuid"
 	jobUsecase "jobs.api.com/internal/usecases/job"
 	userUseCase "jobs.api.com/internal/usecases/user"
 )
@@ -34,9 +35,10 @@ func main() {
 	defer db.Close()
 
 	uuidGenerator := uuidGenerator.NewUuidGenerator()
+	passwordHasher := passwordHasher.NewPasswordHasher()
 
 	userRepo := userRepository.NewUserRepository(db)
-	userUseCases := userUseCase.NewUserUseCase(userRepo, uuidGenerator)
+	userUseCases := userUseCase.NewUserUseCase(userRepo, uuidGenerator, passwordHasher)
 	userHandler := userHandler.NewUserHandler(userUseCases)
 
 	jobRepo := jobRepository.NewJobMySQLRepository(db)

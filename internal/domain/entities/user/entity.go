@@ -9,6 +9,11 @@ import (
 	domainErrors "jobs.api.com/internal/domain/errors"
 )
 
+type Password struct {
+	Plain  string
+	Hashed string
+}
+
 type User struct {
 	UUID     string
 	Email    string
@@ -59,7 +64,7 @@ func isValidPassword(password string) bool {
 	return hasMinLen && hasNumber && hasSpecial
 }
 
-func NewUserEntity(uuid string, name string, email string, password string) (user User, err error) {
+func NewUserEntity(uuid string, name string, email string, password Password) (user User, err error) {
 
 	if uuid == "" {
 		return User{}, domainErrors.ErrInvalidUuid
@@ -69,14 +74,14 @@ func NewUserEntity(uuid string, name string, email string, password string) (use
 		return User{}, domainErrors.ErrInvalidEmailFormat
 	}
 
-	if !isValidName(name) || !isValidPassword(password) {
+	if !isValidName(name) || !isValidPassword(password.Plain) {
 		return User{}, domainErrors.ErrInvalidUserCredential
 	}
 
 	return User{
 		UUID:     uuid,
 		Name:     name,
-		Password: password,
+		Password: password.Hashed,
 		Email:    email,
 	}, nil
 

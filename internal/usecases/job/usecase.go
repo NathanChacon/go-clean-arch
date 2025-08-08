@@ -3,7 +3,7 @@ package jobUsecase
 import (
 	jobEntity "jobs.api.com/internal/domain/entities/job"
 	jobRepositoryAbs "jobs.api.com/internal/domain/repository/job"
-	uuidInterface "jobs.api.com/internal/interfaces/uuid"
+	uuidInterface "jobs.api.com/internal/infrastructure/utils/interfaces/uuid"
 )
 
 type UseCase interface {

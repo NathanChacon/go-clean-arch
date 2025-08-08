@@ -7,7 +7,8 @@ import (
 	userEntity "jobs.api.com/internal/domain/entities/user"
 	domainErrors "jobs.api.com/internal/domain/errors"
 	userRepositoryAbs "jobs.api.com/internal/domain/repository/user"
-	uuidInterface "jobs.api.com/internal/interfaces/uuid"
+	hasherInterface "jobs.api.com/internal/infrastructure/utils/interfaces/hasher"
+	uuidInterface "jobs.api.com/internal/infrastructure/utils/interfaces/uuid"
 )
 
 type CreateAccountParams struct {
@@ -22,12 +23,13 @@ type UseCase interface {
 }
 
 type UserUseCase struct {
-	repository    userRepositoryAbs.UserRepositoryAbs
-	uuidGenerator uuidInterface.UuidGenerator
+	repository     userRepositoryAbs.UserRepositoryAbs
+	uuidGenerator  uuidInterface.UuidGenerator
+	passwordHasher hasherInterface.PasswordHasher
 }
 
-func NewUserUseCase(repository userRepositoryAbs.UserRepositoryAbs, uuidGenerator uuidInterface.UuidGenerator) *UserUseCase {
-	return &UserUseCase{repository: repository, uuidGenerator: uuidGenerator}
+func NewUserUseCase(repository userRepositoryAbs.UserRepositoryAbs, uuidGenerator uuidInterface.UuidGenerator, passwordHasher hasherInterface.PasswordHasher) *UserUseCase {
+	return &UserUseCase{repository: repository, uuidGenerator: uuidGenerator, passwordHasher: passwordHasher}
 }
 
 func (useCase *UserUseCase) GetById(id string) (userEntity.User, error) {
@@ -40,7 +42,19 @@ func (useCase *UserUseCase) GetById(id string) (userEntity.User, error) {
 
 func (useCase *UserUseCase) CreateUser(payload CreateAccountParams) error {
 	uuid := useCase.uuidGenerator.NewUuid()
-	user, err := userEntity.NewUserEntity(uuid, payload.Name, payload.Email, payload.Password)
+
+	hashedPassword, hashError := useCase.passwordHasher.Hash(payload.Password)
+
+	if hashError != nil {
+		return hashError
+	}
+
+	password := userEntity.Password{
+		Plain:  payload.Password,
+		Hashed: hashedPassword,
+	}
+
+	user, err := userEntity.NewUserEntity(uuid, payload.Name, payload.Email, password)
 
 	if err != nil {
 		return err
