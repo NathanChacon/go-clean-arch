@@ -13,6 +13,7 @@ import (
 	authHandler "jobs.api.com/internal/infrastructure/http/authentication"
 	jobHandlers "jobs.api.com/internal/infrastructure/http/job"
 	userHandler "jobs.api.com/internal/infrastructure/http/user"
+	"jobs.api.com/internal/infrastructure/middlewares"
 	jobRepository "jobs.api.com/internal/infrastructure/respository/job"
 	userRepository "jobs.api.com/internal/infrastructure/respository/user"
 	"jobs.api.com/internal/infrastructure/utils/passwordHasher"
@@ -53,11 +54,15 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/user/{id}", userHandler.GetUserById).Methods("GET")
 	router.HandleFunc("/create-account", userHandler.CreateUser).Methods("POST")
 	router.HandleFunc("/login", authenticationHandler.Login).Methods("POST")
-	router.HandleFunc("/jobs", jobHandler.PostJob).Methods("POST")
-	router.HandleFunc("/jobs/{id}", jobHandler.GetJobByID).Methods("GET")
+
+	protectedRoutes := router.PathPrefix("/").Subrouter()
+	protectedRoutes.HandleFunc("/user/{id}", userHandler.GetUserById).Methods("GET")
+	protectedRoutes.HandleFunc("/jobs", jobHandler.PostJob).Methods("POST")
+	protectedRoutes.HandleFunc("/jobs/{id}", jobHandler.GetJobByID).Methods("GET")
+
+	protectedRoutes.Use(middlewares.AuthMiddleware)
 
 	port := os.Getenv("PORT")
 	if port == "" {
