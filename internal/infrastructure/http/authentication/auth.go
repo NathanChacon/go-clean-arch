@@ -1,8 +1,9 @@
-package userHandler
+package authHandler
 
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -24,8 +25,8 @@ func NewAuthHandler(usecase authenticationUseCase.Authenticator) *AuthHandler {
 
 func (handler *AuthHandler) Login(writer http.ResponseWriter, request *http.Request) {
 	type loginDTO struct {
-		email    string
-		password string
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	var loginData loginDTO
@@ -36,11 +37,12 @@ func (handler *AuthHandler) Login(writer http.ResponseWriter, request *http.Requ
 		http.Error(writer, "wrong payload", http.StatusBadRequest)
 		return
 	}
+	fmt.Println("login data", loginData)
 
-	user, err := handler.AuthUseCase.Login(loginData.email, loginData.password)
+	user, err := handler.AuthUseCase.Login(loginData.Email, loginData.Password)
 
 	if errors.Is(err, domainErrors.ErrUserNotFound) || errors.Is(err, domainErrors.ErrInvalidPasswordLogin) {
-		http.Error(writer, "username or password invalid", http.StatusUnauthorized)
+		http.Error(writer, "email or password invalid", http.StatusUnauthorized)
 		return
 	}
 
@@ -48,7 +50,7 @@ func (handler *AuthHandler) Login(writer http.ResponseWriter, request *http.Requ
 		http.Error(writer, "something went wrong", http.StatusInternalServerError)
 	}
 
-	jwtSecret := os.Getenv("JWT_SECRET")
+	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
 
 	cookieExpirationTime := time.Now().Add(48 * time.Hour)
 
@@ -61,6 +63,7 @@ func (handler *AuthHandler) Login(writer http.ResponseWriter, request *http.Requ
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
+		fmt.Println("token error", err, jwtSecret)
 		http.Error(writer, "could not create token", http.StatusInternalServerError)
 		return
 	}

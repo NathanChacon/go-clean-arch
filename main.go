@@ -10,12 +10,14 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
+	authHandler "jobs.api.com/internal/infrastructure/http/authentication"
 	jobHandlers "jobs.api.com/internal/infrastructure/http/job"
 	userHandler "jobs.api.com/internal/infrastructure/http/user"
 	jobRepository "jobs.api.com/internal/infrastructure/respository/job"
 	userRepository "jobs.api.com/internal/infrastructure/respository/user"
 	"jobs.api.com/internal/infrastructure/utils/passwordHasher"
 	uuidGenerator "jobs.api.com/internal/infrastructure/utils/uuid"
+	authenticationUseCase "jobs.api.com/internal/usecases/authentication"
 	jobUsecase "jobs.api.com/internal/usecases/job"
 	userUseCase "jobs.api.com/internal/usecases/user"
 )
@@ -46,10 +48,14 @@ func main() {
 	jobUseCases := jobUsecase.NewJobUseCase(jobRepo, uuidGenerator)
 	jobHandler := jobHandlers.NewJobHandler(jobUseCases)
 
+	authenticationUseCase := authenticationUseCase.NewAutheticationUseCase(userRepo, passwordHasher)
+	authenticationHandler := authHandler.NewAuthHandler(authenticationUseCase)
+
 	router := mux.NewRouter()
 
 	router.HandleFunc("/user/{id}", userHandler.GetUserById).Methods("GET")
 	router.HandleFunc("/create-account", userHandler.CreateUser).Methods("POST")
+	router.HandleFunc("/login", authenticationHandler.Login).Methods("POST")
 	router.HandleFunc("/jobs", jobHandler.PostJob).Methods("POST")
 	router.HandleFunc("/jobs/{id}", jobHandler.GetJobByID).Methods("GET")
 
