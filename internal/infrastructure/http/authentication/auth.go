@@ -3,7 +3,6 @@ package authHandler
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -37,7 +36,6 @@ func (handler *AuthHandler) Login(writer http.ResponseWriter, request *http.Requ
 		http.Error(writer, "wrong payload", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("login data", loginData)
 
 	user, err := handler.AuthUseCase.Login(loginData.Email, loginData.Password)
 
@@ -63,7 +61,6 @@ func (handler *AuthHandler) Login(writer http.ResponseWriter, request *http.Requ
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
-		fmt.Println("token error", err, jwtSecret)
 		http.Error(writer, "could not create token", http.StatusInternalServerError)
 		return
 	}

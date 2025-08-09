@@ -87,7 +87,6 @@ func (r *UserRepository) GetById(id string) (userEntity.User, error) {
 func (r *UserRepository) GetByEmail(email string) (userEntity.User, error) {
 	var userDTO UserDTO
 
-	fmt.Println("teste", email)
 	err := r.db.Get(&userDTO, `SELECT * FROM users WHERE email = ?`, email)
 	if errors.Is(err, sql.ErrNoRows) {
 		return userEntity.User{}, domainErrors.ErrUserNotFound
