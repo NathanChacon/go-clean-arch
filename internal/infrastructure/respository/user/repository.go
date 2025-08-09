@@ -12,6 +12,15 @@ import (
 	domainErrors "jobs.api.com/internal/domain/errors"
 )
 
+type UserDTO struct {
+	UUID     string
+	Name     string
+	Password string
+	Email    string
+	Bio      string
+	Location string
+}
+
 type UserModel struct {
 	UUID     string `json:"uuid"`
 	Email    string `json:"email"`
@@ -73,4 +82,27 @@ func (r *UserRepository) GetById(id string) (userEntity.User, error) {
 
 	return newUserEntity, err
 
+}
+
+func (r *UserRepository) GetByEmail(email string) (userEntity.User, error) {
+	var userDTO UserDTO
+	err := r.db.Get(&userDTO, `SELECT * FROM users WHERE email = ?`, email)
+	if errors.Is(err, sql.ErrNoRows) {
+		return userEntity.User{}, domainErrors.ErrUserNotFound
+	}
+	if err != nil {
+		return userEntity.User{}, err
+	}
+
+	user, err := userEntity.NewUserEntityFromPersistence(
+		userDTO.UUID,
+		userDTO.Name,
+		userDTO.Email,
+		userDTO.Password,
+	)
+	if err != nil {
+		return userEntity.User{}, err
+	}
+
+	return user, nil
 }

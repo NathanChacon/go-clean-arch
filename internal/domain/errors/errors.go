@@ -9,4 +9,5 @@ var (
 	ErrInvalidEmailFormat    = errors.New("email format is invalid")
 	ErrInvalidUuid           = errors.New("invalid uuid")
 	ErrUserAlreadyRegistered = errors.New("user already registered")
+	ErrInvalidPasswordLogin  = errors.New("wrong password")
 )

@@ -84,5 +84,26 @@ func NewUserEntity(uuid string, name string, email string, password Password) (u
 		Password: password.Hashed,
 		Email:    email,
 	}, nil
+}
 
+func NewUserEntityFromPersistence(uuid, name, email, hashedPassword string) (User, error) {
+	if uuid == "" {
+		return User{}, domainErrors.ErrInvalidUuid
+	}
+	if !isValidEmail(email) {
+		return User{}, domainErrors.ErrInvalidEmailFormat
+	}
+	if !isValidName(name) {
+		return User{}, domainErrors.ErrInvalidUserCredential
+	}
+	if hashedPassword == "" {
+		return User{}, domainErrors.ErrInvalidUserCredential
+	}
+
+	return User{
+		UUID:     uuid,
+		Name:     name,
+		Email:    email,
+		Password: hashedPassword,
+	}, nil
 }

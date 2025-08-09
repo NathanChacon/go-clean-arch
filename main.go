@@ -1,5 +1,6 @@
 package main
 
+// to do - improve domain error separating by use cases. Ex user errors should be in package userErrors etc
 import (
 	"log"
 	"net/http"
