@@ -9,6 +9,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type AuthData struct {
+	Email string
+	Name  string
+	Id    string
+}
+
 func AuthMiddleware(next http.Handler) http.Handler {
 	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -32,17 +38,13 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			type AuthData struct {
-				Email string
-				Name  string
-			}
-
 			authData := AuthData{
 				Email: fmt.Sprint(claims["email"]),
 				Name:  fmt.Sprint(claims["name"]),
+				Id:    fmt.Sprint(claims["id"]),
 			}
 
-			ctx := context.WithValue(request.Context(), authData, authData)
+			ctx := context.WithValue(request.Context(), "authData", authData)
 			request = request.WithContext(ctx)
 		}
 

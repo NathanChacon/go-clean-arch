@@ -1,6 +1,13 @@
 package main
 
-// to do - improve domain error separating by use cases. Ex user errors should be in package userErrors etc
+// stop exporting entity and just export the constructors
+
+// verify post job function and cerate a getAllJobs flow
+
+// add cache on jobs lists with Redis or a simpler lib ?
+
+// add docker ?
+
 import (
 	"log"
 	"net/http"
@@ -45,7 +52,7 @@ func main() {
 	userUseCases := userUseCase.NewUserUseCase(userRepo, uuidGenerator, passwordHasher)
 	userHandler := userHandler.NewUserHandler(userUseCases)
 
-	jobRepo := jobRepository.NewJobMySQLRepository(db)
+	jobRepo := jobRepository.NewJobRepository(db)
 	jobUseCases := jobUsecase.NewJobUseCase(jobRepo, uuidGenerator)
 	jobHandler := jobHandlers.NewJobHandler(jobUseCases)
 

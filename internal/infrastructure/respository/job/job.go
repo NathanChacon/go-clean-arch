@@ -2,21 +2,24 @@ package jobRepository
 
 import (
 	"database/sql"
+	"errors"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 
 	jobEntity "jobs.api.com/internal/domain/entities/job"
+	domainErrors "jobs.api.com/internal/domain/errors"
 )
 
 type JobMySQLRepository struct {
 	db *sqlx.DB
 }
 
-func NewJobMySQLRepository(db *sqlx.DB) *JobMySQLRepository {
+func NewJobRepository(db *sqlx.DB) *JobMySQLRepository {
 	return &JobMySQLRepository{db: db}
 }
 
-func (repository *JobMySQLRepository) Create(jobPayload jobEntity.Job) error {
+func (repository *JobMySQLRepository) Create(jobPayload *jobEntity.Job) error {
 	query := `
         INSERT INTO jobs (uuid, title, description, location, created_by)
         VALUES (?, ?, ?, ?, ?)
@@ -28,7 +31,19 @@ func (repository *JobMySQLRepository) Create(jobPayload jobEntity.Job) error {
 		jobPayload.Location,
 		jobPayload.CreatedBy,
 	)
-	return err
+
+	if err != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) {
+			switch mysqlErr.Number {
+			case 1048:
+				return domainErrors.ErrJobMissingRequiredField
+			}
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (repository *JobMySQLRepository) List() ([]jobEntity.Job, error) {

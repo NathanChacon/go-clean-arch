@@ -55,6 +55,7 @@ func (handler *AuthHandler) Login(writer http.ResponseWriter, request *http.Requ
 	claims := jwt.MapClaims{
 		"email": user.Email,
 		"name":  user.Name,
+		"id":    user.UUID,
 		"exp":   cookieExpirationTime.Unix(),
 		"iat":   time.Now().Unix(),
 	}

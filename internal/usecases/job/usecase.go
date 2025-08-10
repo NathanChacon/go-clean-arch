@@ -6,8 +6,17 @@ import (
 	uuidInterface "jobs.api.com/internal/infrastructure/utils/interfaces/uuid"
 )
 
+type JobDTO struct {
+	UUID        string `json:"uuid,omitempty"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Location    string `json:"location"`
+	CompanyID   string `json:"company_id"`
+	CreatedBy   string `json:"created_by"`
+}
+
 type UseCase interface {
-	PostJob(payload jobEntity.Job) error
+	PostJob(payload JobDTO) error
 	GetById(uuid string) (*jobEntity.Job, error)
 }
 
@@ -20,10 +29,23 @@ func NewJobUseCase(repository jobRepositoryAbs.JobRepositoryInterface, uuidGener
 	return &JobUseCase{repository: repository, uuidGenerator: uuidGenerator}
 }
 
-func (useCase *JobUseCase) PostJob(payload jobEntity.Job) error {
-	payload.UUID = useCase.uuidGenerator.NewUuid()
+func (useCase *JobUseCase) PostJob(payload JobDTO) error {
+	var formattedPayload = jobEntity.NewJobParams{
+		UUID:        useCase.uuidGenerator.NewUuid(),
+		Title:       payload.Title,
+		Description: payload.Description,
+		Location:    payload.Location,
+		CompanyID:   payload.CompanyID,
+		CreatedBy:   payload.CreatedBy,
+	}
 
-	err := useCase.repository.Create(payload)
+	job, jobError := jobEntity.NewJobEntity(formattedPayload)
+
+	if jobError != nil {
+		return jobError
+	}
+
+	err := useCase.repository.Create(job)
 
 	return err
 }
