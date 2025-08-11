@@ -2,7 +2,7 @@ package main
 
 // stop exporting entity and just export the constructors
 
-// verify post job function and cerate a getAllJobs flow
+// create a getAllJobs flow
 
 // add cache on jobs lists with Redis or a simpler lib ?
 
@@ -38,6 +38,7 @@ func main() {
 	}
 
 	dsn := os.Getenv("DB_URL")
+	dsn = dsn + "?parseTime=true"
 	db, err := sqlx.Connect("mysql", dsn)
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %v", err)
@@ -67,6 +68,7 @@ func main() {
 	protectedRoutes := router.PathPrefix("/").Subrouter()
 	protectedRoutes.HandleFunc("/user/{id}", userHandler.GetUserById).Methods("GET")
 	protectedRoutes.HandleFunc("/jobs", jobHandler.PostJob).Methods("POST")
+	protectedRoutes.HandleFunc("/jobs", jobHandler.GetAll).Methods("GET")
 	protectedRoutes.HandleFunc("/jobs/{id}", jobHandler.GetJobByID).Methods("GET")
 
 	protectedRoutes.Use(middlewares.AuthMiddleware)

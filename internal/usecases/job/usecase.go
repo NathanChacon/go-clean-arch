@@ -18,6 +18,7 @@ type JobDTO struct {
 type UseCase interface {
 	PostJob(payload JobDTO) error
 	GetById(uuid string) (*jobEntity.Job, error)
+	GetAll() ([]*jobEntity.Job, error)
 }
 
 type JobUseCase struct {
@@ -48,6 +49,14 @@ func (useCase *JobUseCase) PostJob(payload JobDTO) error {
 	err := useCase.repository.Create(job)
 
 	return err
+}
+
+func (useCase *JobUseCase) GetAll() ([]*jobEntity.Job, error) {
+	jobs, err := useCase.repository.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	return jobs, nil
 }
 
 func (useCase *JobUseCase) GetById(uuid string) (*jobEntity.Job, error) {

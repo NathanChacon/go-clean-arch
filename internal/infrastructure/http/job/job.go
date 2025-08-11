@@ -69,6 +69,16 @@ func (handler *JobHandler) PostJob(writer http.ResponseWriter, request *http.Req
 	writer.WriteHeader(http.StatusCreated)
 }
 
+func (handler *JobHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	jobs, err := handler.usecase.GetAll()
+
+	if err != nil {
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+	}
+
+	json.NewEncoder(w).Encode(jobs)
+}
+
 func (handler *JobHandler) GetJobByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]

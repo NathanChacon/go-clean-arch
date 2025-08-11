@@ -1,16 +1,19 @@
 package jobEntity
 
 import (
+	"time"
+
 	domainErrors "jobs.api.com/internal/domain/errors"
 )
 
 type Job struct {
-	UUID        string
-	Title       string
-	Description string
-	Location    string
-	CompanyID   string
-	CreatedBy   string
+	UUID        string    `db:"uuid"`
+	Title       string    `db:"title"`
+	Description string    `db:"description"`
+	Location    string    `db:"location"`
+	CompanyID   string    `db:"company_id"`
+	CreatedBy   string    `db:"created_by"`
+	CreatedAt   time.Time `db:"created_at"`
 }
 
 type NewJobParams struct {

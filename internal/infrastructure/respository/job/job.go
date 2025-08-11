@@ -3,6 +3,7 @@ package jobRepository
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -17,6 +18,20 @@ type JobMySQLRepository struct {
 
 func NewJobRepository(db *sqlx.DB) *JobMySQLRepository {
 	return &JobMySQLRepository{db: db}
+}
+
+func (repository *JobMySQLRepository) GetAll() ([]*jobEntity.Job, error) {
+	var jobs []*jobEntity.Job
+	query := `SELECT * FROM jobs`
+	err := repository.db.Select(&jobs, query)
+
+	if err != nil {
+		fmt.Println("teste error get all jobs", err)
+		return jobs, err
+	}
+
+	return jobs, nil
+
 }
 
 func (repository *JobMySQLRepository) Create(jobPayload *jobEntity.Job) error {
