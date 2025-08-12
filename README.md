@@ -1,5 +1,5 @@
 # Go Job Board API
-This project is a backend API built with Go, designed as a stepping stone in my journey from front-end developer to full-stack/back-end engineer. It demonstrates modern backend practices with a focus on clean architecture and scalable design.
+This project is a backend API built with Go that demonstrates modern backend practices, emphasizing clean architecture and scalable design. It provides a robust foundation for building maintainable and efficient server-side applications.
 
 ## Key Features
 Clean Architecture: Clear separation of concerns with distinct layers for domain entities, use cases, and infrastructure, promoting maintainability and testability.
