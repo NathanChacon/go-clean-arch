@@ -2,17 +2,18 @@ package main
 
 // stop exporting entity and just export the constructors
 
-// create a getAllJobs flow
-
 // add cache on jobs lists with Redis or a simpler lib ?
 
 // add docker ?
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
@@ -30,21 +31,44 @@ import (
 	userUseCase "jobs.api.com/internal/usecases/user"
 )
 
-func main() {
+func initializeDb() (*sqlx.DB, error) {
+	dsn := os.Getenv("DB_URL")
+	dsn = dsn + "?parseTime=true"
+	db, err := sqlx.Connect("mysql", dsn)
 
+	return db, err
+}
+
+func initializeRedis() *redis.Client {
+	redisUrl := os.Getenv("REDIS_URL")
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: redisUrl,
+		DB:   0,
+	})
+
+	return redisClient
+}
+
+func main() {
+	ctx := context.Background()
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Failed to load .env file: %v", err)
 		return
 	}
 
-	dsn := os.Getenv("DB_URL")
-	dsn = dsn + "?parseTime=true"
-	db, err := sqlx.Connect("mysql", dsn)
+	db, err := initializeDb()
+
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %v", err)
 		return
 	}
 	defer db.Close()
+
+	redisClient := initializeRedis()
+
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		fmt.Println("Failed to connect to Redis: %v", err)
+	}
 
 	uuidGenerator := uuidGenerator.NewUuidGenerator()
 	passwordHasher := passwordHasher.NewPasswordHasher()
@@ -55,7 +79,7 @@ func main() {
 
 	jobRepo := jobRepository.NewJobRepository(db)
 	jobUseCases := jobUsecase.NewJobUseCase(jobRepo, uuidGenerator)
-	jobHandler := jobHandlers.NewJobHandler(jobUseCases)
+	jobHandler := jobHandlers.NewJobHandler(jobUseCases, redisClient)
 
 	authenticationUseCase := authenticationUseCase.NewAutheticationUseCase(userRepo, passwordHasher)
 	authenticationHandler := authHandler.NewAuthHandler(authenticationUseCase)

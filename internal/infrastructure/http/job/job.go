@@ -3,12 +3,15 @@ package jobHandlers
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
+	"time"
 
 	domainErrors "jobs.api.com/internal/domain/errors"
 	"jobs.api.com/internal/infrastructure/middlewares"
 	jobUsecase "jobs.api.com/internal/usecases/job"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
 )
 
@@ -23,10 +26,11 @@ func isErrorInList(err error, list []error) bool {
 
 type JobHandler struct {
 	usecase jobUsecase.UseCase
+	redis   *redis.Client
 }
 
-func NewJobHandler(usecase jobUsecase.UseCase) *JobHandler {
-	return &JobHandler{usecase: usecase}
+func NewJobHandler(usecase jobUsecase.UseCase, redis *redis.Client) *JobHandler {
+	return &JobHandler{usecase: usecase, redis: redis}
 }
 
 func (handler *JobHandler) PostJob(writer http.ResponseWriter, request *http.Request) {
@@ -70,13 +74,37 @@ func (handler *JobHandler) PostJob(writer http.ResponseWriter, request *http.Req
 }
 
 func (handler *JobHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	jobs, err := handler.usecase.GetAll()
+	ctx := r.Context()
 
-	if err != nil {
-		http.Error(w, "something went wrong", http.StatusInternalServerError)
+	const cacheKey = "jobs:all"
+
+	cached, err := handler.redis.Get(ctx, cacheKey).Result()
+	if err == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(cached))
+		return
 	}
 
-	json.NewEncoder(w).Encode(jobs)
+	jobs, err := handler.usecase.GetAll()
+	if err != nil {
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(jobs)
+
+	if err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		return
+	}
+
+	err = handler.redis.Set(ctx, cacheKey, data, 5*time.Minute).Err()
+	if err != nil {
+		log.Printf("Redis SET error: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
 }
 
 func (handler *JobHandler) GetJobByID(w http.ResponseWriter, r *http.Request) {
