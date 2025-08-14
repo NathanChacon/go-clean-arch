@@ -1,10 +1,6 @@
 package main
 
-// stop exporting entity and just export the constructors
-
-// add cache on jobs lists with Redis or a simpler lib ?
-
-// add docker ?
+// implement user confirm email flow ?
 
 import (
 	"context"
@@ -51,11 +47,11 @@ func initializeRedis() *redis.Client {
 
 func main() {
 	ctx := context.Background()
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Failed to load .env file: %v", err)
-		return
-	}
-
+    if _, err := os.Stat(".env"); err == nil {
+        if err := godotenv.Load(); err != nil {
+            log.Println("Warning: could not load .env file:", err)
+        }
+    }
 	db, err := initializeDb()
 
 	if err != nil {
